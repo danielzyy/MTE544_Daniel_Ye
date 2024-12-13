@@ -47,7 +47,18 @@ class planner:
         # [Part 3] TODO Use the PRM and search_PRM to generate the path
         # Hint: see the example of the ASTAR case below, there is no scaling factor for PRM
         if type == PRM_PLANNER:
-            ...
+            # robot radius is 105mm from turtlebot3 datasheet, add a 50mm padding to be safe
+            rr = 0.155
+            sample_points, prm = prm_graph(startPose, endPose, self.obstaclesListCell, rr, m_utilities=self.m_utilities)
+            # Store the start and end times to calculate the time it takes for PRM A* search
+            start_time = time.time()
+
+            path_ = search_PRM(sample_points, prm, startPose, endPose)
+
+            end_time = time.time()
+            print(f"Path: {path_}")
+
+            print(f"the time took for PRM a_star calculation was {end_time - start_time}")            
 
         elif type == ASTAR_PLANNER: # This is the same planner you should have implemented for Lab4
             scale_factor = 4 # Depending on resolution, this can be smaller or larger
@@ -58,7 +69,7 @@ class planner:
             path = search(self.costMap, startPose, endPose, scale_factor)
 
             end_time = time.time()
-
+            print(f"Path: {path}")
 
             print(f"the time took for a_star calculation was {end_time - start_time}")
 

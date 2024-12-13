@@ -140,7 +140,7 @@ def search(maze, start, end, scale_factor):
 
         # test if goal is reached or not, if yes then return the path
         if current_node == end_node:
-            print ("Goal reached")
+            print (f"Goal reached, cost: {current_node.g * scale_factor}")
             return return_path(current_node,maze)
 
         # Generate children from all adjacent squares
@@ -206,16 +206,81 @@ def search_PRM(points, prm, start, end):
         :return:
     """
     # Create start and end node with initized values for g, h and f
-    start_idx = points.index(tuple(start))
-    start_node = Node(None, start_idx)
+    start_pos = tuple(start)
+    start_idx = points.index(start_pos)
+    print(f"startindx {start_idx}, {start_pos}")
+    start_node = Node(None, start_pos)
     start_node.g = start_node.h = start_node.f = 0
 
-    end_idx = points.index(tuple(end))
-    end_node = Node(None, end_idx)
+    end_pos = tuple(end)
+    end_idx = points.index(end_pos)
+    print(f"endindx {end_idx}", {end_pos})
+    end_node = Node(None, end_pos)
     end_node.g = end_node.h = end_node.f = 0
 
     path_points = []
 
-    ...
-    
+    # two dicts to store the nodes to visit, and the nodes that have already been visited
+    yet_to_visit_dict = {}
+    visited_dict = {}
+    # add start node as first node
+    yet_to_visit_dict[start_node.position] = start_node
+    # set stopping conditions if too many iterations ran
+    outer_iterations = 0
+    max_iterations = (len(prm)) ** 10
+
+    current_node = Node()
+    while len(yet_to_visit_dict) > 0:
+        outer_iterations += 1
+
+        if outer_iterations > max_iterations:
+            print("Max iterations reached")
+            break
+
+        # Find the node with the lowest f-value to process
+        current_node.f = 999999
+        for i_position in yet_to_visit_dict.keys():
+            i_node = yet_to_visit_dict[i_position]
+            if i_node.f < current_node.f: ## only store the lower f-value node
+                current_node = i_node
+        
+        # pop the lowest f-value node and mark it as visited
+        yet_to_visit_dict.pop(current_node.position)
+        visited_dict[current_node.position] = True
+
+        # if the goal is reached, return the path
+        if current_node == end_node:
+            print (f"Goal reached, cost: {current_node.g}")
+            break
+        
+        # generate children from prm edges of the current node
+        children_index_list = prm[points.index(current_node.position)] # list of indexes in list of points
+
+        for child_index in children_index_list:
+            # create the child node with the current node as it's parent
+            child = Node(current_node, points[child_index])
+            # ignore child if already visited
+            if visited_dict.get(child.position, False):
+                continue
+            
+            # Calculate f, g, h values
+            child.g = current_node.g + sqrt(((child.position[0] - current_node.position[0]) ** 2) + 
+                                           ((child.position[1] - current_node.position[1]) ** 2))
+            # heuristic uses eucledian distance
+            child.h = sqrt(((child.position[0] - end_node.position[0]) ** 2) + 
+                           ((child.position[1] - end_node.position[1]) ** 2))
+            child.f = child.g + child.h
+
+            # if the child has not been visited yet, or has a lower g-value than the one in the yet_to_visit dict,
+            # add the child to the yet_to_visit dict
+            if (child.position not in yet_to_visit_dict.keys() or yet_to_visit_dict[child.position].g > child.g):
+                yet_to_visit_dict[child.position] = child
+
+    # trace back from current_node to find path using parents
+    while current_node is not None:
+        path_points.append(current_node.position)
+        current_node = current_node.parent
+    # Return reversed path as we need to show from start to end path
+    path_points = path_points[::-1]
+
     return path_points

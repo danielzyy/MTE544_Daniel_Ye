@@ -68,23 +68,25 @@ class localization(Node):
                         0,
                         0])        
 
-            Q=0.1*np.eye(6)
-            R=0.4*np.eye(4)
+            Q=0.4*np.eye(6)
+            R=0.05*np.eye(4)
             P=Q.copy()
             
             self.kf=kalman_filter(P,Q,R, x)
             self.kalmanInitialized = True
         
-        dt = time.time() - self.timelast
-
-        self.timelast=time.time()
+        # dt = time.time() - self.timelast
+        # self.timelast=time.time()
+        current_time = Time.from_msg(imu_msg.header.stamp).nanoseconds
+        dt = (current_time - self.timelast) * 1e-9 
+        self.timelast = current_time
 
 
         z=np.array([odom_msg.twist.twist.linear.x,
                     odom_msg.twist.twist.angular.z,
                     imu_msg.linear_acceleration.x,
                     imu_msg.linear_acceleration.y])
-        print(dt)
+        # print(dt)
         self.kf.predict(dt)
         self.kf.update(z)
         
@@ -98,7 +100,7 @@ class localization(Node):
         
         self.loc_logger.log_values([z[2], z[3], xhat[5], xhat[4]*xhat[3], xhat[4], xhat[3], xhat[0], xhat[1], Time.from_msg(imu_msg.header.stamp).nanoseconds])
         
-        print(f"{xhat[0]} and {xhat[1]} vs {odom_msg.pose.pose.position.x} vs {odom_msg.pose.pose.position.y}")
+        # print(f"{xhat[0]} and {xhat[1]} vs {odom_msg.pose.pose.position.x} vs {odom_msg.pose.pose.position.y}")
     def odom_callback(self, pose_msg):
         
         self.pose=[ pose_msg.pose.pose.position.x,
